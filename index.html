@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Josh | Voice AI Evaluator</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/b/b7/Josh_Talk_Logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0b0a;
+            --bg-secondary: #101210;
+            --bg-card: #141614;
+            --bg-input: #1a1c1a;
+            --bg-hover: #1e201e;
+            --accent: #22c55e;
+            --accent-light: #4ade80;
+            --accent-dark: #16a34a;
+            --accent-bg: rgba(34,197,94,0.07);
+            --accent-bg-hover: rgba(34,197,94,0.14);
+            --accent-border: rgba(34,197,94,0.25);
+            --text-primary: #eef0ee;
+            --text-secondary: #7c837c;
+            --text-muted: #4a4f4a;
+            --border: #1e211e;
+            --border-light: #282b28;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #60a5fa;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== SCREEN MANAGEMENT ===== */
+        .screen { display: none; animation: fadeIn 0.4s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-15deg); }
+            60% { transform: scale(1.15) rotate(3deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ===== GLOBAL COMPONENTS ===== */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 24px; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: all 0.2s; border: none; outline: none;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: var(--accent); color: #000;
+        }
+        .btn-primary:hover {
+            background: var(--accent-light); transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(34,197,94,0.25);
+        }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-secondary {
+            background: var(--bg-input); color: var(--text-primary);
+            border: 1px solid var(--border-light);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-hover); border-color: var(--accent-border);
+        }
+        .btn-full { width: 100%; }
+
+        .form-input {
+            width: 100%; padding: 12px 16px;
+            background: var(--bg-input); border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm); color: var(--text-primary);
+            font-size: 14px; font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.08);
+        }
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-green {
+            background: var(--accent-bg); color: var(--accent);
+            border: 1px solid var(--accent-border);
+        }
+        .badge-yellow {
+            background: rgba(245,158,11,0.08); color: var(--warning);
+            border: 1px solid rgba(245,158,11,0.25);
+        }
+        .badge-gray {
+            background: rgba(124,131,124,0.08); color: var(--text-secondary);
+            border: 1px solid var(--border-light);
+        }
+        .badge-blue {
+            background: rgba(96,165,250,0.08); color: var(--info);
+            border: 1px solid rgba(96,165,250,0.25);
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        .login-screen {
+            min-height: 100vh; display: flex;
+            background:
+                radial-gradient(ellipse at 15% 50%, rgba(34,197,94,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse at 85% 15%, rgba(34,197,94,0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 90%, rgba(34,197,94,0.02) 0%, transparent 40%),
+                var(--bg-primary);
+        }
+        .login-left {
+            flex: 1; display: flex; flex-direction: column; justify-content: center;
+            padding: 60px; max-width: 600px;
+        }
+        .login-brand {
+            display: flex; align-items: center; gap: 14px; margin-bottom: 60px;
+        }
+        .login-brand img { height: 40px; }
+        .login-brand-divider {
+            width: 1px; height: 28px; background: var(--border-light);
+        }
+        .login-brand-text h3 {
+            font-size: 14px; font-weight: 700; color: var(--accent);
+        }
+        .login-brand-text p {
+            font-size: 11px; color: var(--text-secondary);
+        }
+        .login-hero h1 {
+            font-size: 42px; font-weight: 900; line-height: 1.1; margin-bottom: 16px;
+        }
+        .login-hero h1 span { color: var(--accent); }
+        .login-hero p {
+            font-size: 16px; color: var(--text-secondary); line-height: 1.7;
+            max-width: 420px;
+        }
+        .login-features {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px;
+        }
+        .feature-tag {
+            padding: 6px 14px; border-radius: 20px;
+            background: var(--accent-bg); border: 1px solid var(--accent-border);
+            font-size: 12px; font-weight: 500; color: var(--accent);
+        }
+        .login-right {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            padding: 40px;
+        }
+        .login-card {
+            width: 100%; max-width: 420px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 40px;
+        }
+        .login-card h2 {
+            font-size: 22px; font-weight: 800; margin-bottom: 4px;
+        }
+        .login-card .subtitle {
+            font-size: 14px; color: var(--text-secondary); margin-bottom: 32px;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 13px; font-weight: 500;
+            color: var(--text-secondary); margin-bottom: 8px;
+        }
+        .password-wrapper { position: relative; }
+        .password-toggle {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif;
+        }
+        .password-toggle:hover { color: var(--text-secondary); }
+        .form-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px;
+        }
+        .form-row label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--text-secondary); cursor: pointer;
+        }
+        .checkbox {
+            width: 16px; height: 16px; border-radius: 4px;
+            border: 1px solid var(--border-light); background: var(--bg-input);
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+            position: relative; transition: all 0.2s;
+        }
+        .checkbox:checked {
+            background: var(--accent); border-color: var(--accent);
+        }
+        .checkbox:checked::after {
+            content: '✓'; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%,-50%); color: #000;
+            font-size: 10px; font-weight: 800;
+        }
+        .form-row a {
+            font-size: 13px; color: var(--accent); text-decoration: none;
+        }
+        .form-row a:hover { text-decoration: underline; }
+        .login-footer {
+            text-align: center; margin-top: 24px;
+            font-size: 13px; color: var(--text-muted);
+        }
+        .login-footer a { color: var(--accent); text-decoration: none; }
+        .login-error {
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+            border-radius: var(--radius-sm); padding: 10px 14px;
+            font-size: 13px; color: var(--danger); margin-bottom: 20px;
+            display: none; align-items: center; gap: 8px;
+        }
+
+        /* ===== APP HEADER ===== */
+        .app-header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(10,11,10,0.88); backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border); padding: 0 28px; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-logo { height: 30px; }
+        .header-sep { width: 1px; height: 24px; background: var(--border-light); }
+        .header-brand h3 { font-size: 13px; font-weight: 700; color: var(--accent); }
+        .header-brand p { font-size: 10px; color: var(--text-secondary); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .header-nav { display: flex; gap: 4px; }
+        .nav-btn {
+            padding: 8px 16px; border-radius: var(--radius-sm);
+            font-size: 13px; font-weight: 500; color: var(--text-secondary);
+            background: transparent; border: none; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all 0.2s;
+        }
+        .nav-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+        .nav-btn.active { color: var(--accent); background: var(--accent-bg); }
+        .user-pill {
+            display: flex; align-items: center; gap: 10px;
+            padding: 5px 14px 5px 5px; border-radius: 28px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .user-pill:hover { border-color: var(--accent-border); }
+        .user-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #000;
+        }
+        .user-pill span { font-size: 13px; font-weight: 500; }
+
+        /* ===== DASHBOARD ===== */
+        .dashboard { max-width: 1200px; margin: 0 auto; padding: 32px 28px; }
+        .welcome h1 { font-size: 30px; font-weight: 900; margin-bottom: 4px; }
+        .welcome h1 span { color: var(--accent); }
+        .welcome p { font-size: 15px; color: var(--text-secondary); margin-bottom: 28px; }
+
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 14px; margin-bottom: 36px;
+        }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px;
+            transition: all 0.25s; cursor: default;
+        }
+        .stat-card:hover { border-color: var(--accent-border); transform: translateY(-2px); }
+        .stat-icon { font-size: 22px; margin-bottom: 14px; }
+        .stat-value { font-size: 32px; font-weight: 900; }
+        .stat-value.green { color: var(--accent); }
+        .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+        .section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-head h2 { font-size: 18px; font-weight: 700; }
+
+        .queue { display: flex; flex-direction: column; gap: 6px; }
+        .queue-item {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px 20px;
+            display: flex; align-items: center; gap: 16px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .queue-item:hover {
+            border-color: var(--accent-border); background: var(--bg-hover);
+            transform: translateX(6px);
+        }
+        .qi-icon {
+            width: 42px; height: 42px; border-radius: 10px;
+            background: var(--accent-bg); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .qi-info { flex: 1; min-width: 0; }
+        .qi-info h3 { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+        .qi-info p {
+            font-size: 12px; color: var(--text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .qi-meta { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+        .qi-dur { font-size: 12px; color: var(--text-muted); }
+        .qi-arrow { font-size: 18px; color: var(--text-muted); }
+
+        /* ===== EVALUATION ===== */
+        .eval-bar {
+            position: sticky; top: 64px; z-index: 50;
+            background: rgba(10,11,10,0.92); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 28px; display: flex; align-items: center;
+            justify-content: space-between; gap: 16px;
+        }
+        .eval-bar-left { display: flex; align-items: center; gap: 14px; }
+        .back-btn {
+            width: 34px; height: 34px; border-radius: var(--radius-sm);
+            background: var(--bg-input); border: 1px solid var(--border-light);
+            color: var(--text-primary); display: flex; align-items: center;
+            justify-content: center; cursor: pointer; font-size: 15px;
+            transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .back-btn:hover { border-color: var(--accent-border); background: var(--accent-bg); }
+        .eval-bar .progress-text {
+            font-size: 14px; font-weight: 600;
+        }
+        .eval-bar .progress-text span { color: var(--accent); }
+        .mini-progress {
+            width: 180px; height: 4px; background: var(--bg-input);
+            border-radius: 2px; overflow: hidden;
+        }
+        .mini-progress-fill {
+            height: 100%; background: var(--accent); border-radius: 2px;
+            transition: width 0.4s ease;
+        }
+
+        .eval-body {
+            max-width: 1280px; margin: 0 auto; padding: 24px 28px;
+            display: grid; grid-template-columns: 1fr 360px; gap: 24px;
+        }
+        .eval-left { display: flex; flex-direction: column; gap: 18px; }
+
+        /* Context */
+        .ctx-card {
+            background: var(--accent-bg); border: 1px solid var(--accent-border);
+            border-radius: var(--radius); padding: 18px 22px;
+        }
+        .ctx-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.2px; color: var(--accent); margin-bottom: 8px;
+        }
+        .ctx-card p { font-size: 14px; line-height: 1.65; }
+        .ctx-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+        .ctx-tag {
+            font-size: 11px; padding: 4px 10px; border-radius: 6px;
+            background: rgba(0,0,0,0.35); color: var(--text-secondary);
+        }
+
+        /* Audio */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+        }
+        .card-head {
+            padding: 14px 20px; border-bottom: 1px solid var(--border);
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-body { padding: 20px; }
+
+        .waveform {
+            width: 100%; height: 56px; background: var(--bg-input);
+            border-radius: 8px; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 1.5px;
+            padding: 0 10px; cursor: pointer; position: relative;
+            overflow: hidden;
+        }
+        .wave-bar {
+            flex: 1; border-radius: 1.5px;
+            background: var(--border-light); transition: background 0.15s;
+            min-width: 2px;
+        }
+        .wave-bar.played { background: var(--accent); }
+
+        .audio-row {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .play-btn {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: var(--accent); border: none; color: #000;
+            font-size: 16px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .play-btn:hover { background: var(--accent-light); transform: scale(1.06); }
+        .time-display {
+            font-size: 13px; color: var(--text-secondary);
+            font-variant-numeric: tabular-nums; min-width: 80px;
+        }
+        .audio-seek {
+            flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+            background: var(--border-light); border-radius: 2px; outline: none;
+            cursor: pointer;
+        }
+        .audio-seek::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: var(--accent); cursor: pointer;
+            box-shadow: 0 0 6px rgba(34,197,94,0.3);
+        }
+        .speed-row {
+            display: flex; gap: 4px; margin-left: auto; flex-shrink: 0;
+        }
+        .spd {
+            padding: 4px 10px; border-radius: 6px; font-size: 11px;
+            font-weight: 600; background: var(--bg-input);
+            border: 1px solid var(--border); color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .spd.active {
+            background: var(--accent-bg); border-color: var(--accent-border);
+            color: var(--accent);
+        }
+
+        /* Transcript */
+        .transcript-scroll {
+            max-height: 340px; overflow-y: auto; padding: 14px 18px;
+        }
+        .transcript-scroll::-webkit-scrollbar { width: 3px; }
+        .transcript-scroll::-webkit-scrollbar-track { background: transparent; }
+        .transcript-scroll::-webkit-scrollbar-thumb {
+            background: var(--border-light); border-radius: 2px;
+        }
+        .t-line {
+            display: flex; gap: 10px; padding: 8px 10px;
+            border-radius: 8px; margin-bottom: 2px;
+            cursor: pointer; transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .t-line:hover { background: var(--bg-hover); }
+        .t-line.active {
+            background: var(--accent-bg); border-left-color: var(--accent);
+        }
+        .t-ts {
+            font-size: 10px; color: var(--text-muted);
+            font-variant-numeric: tabular-nums; min-width: 32px;
+            padding-top: 3px; flex-shrink: 0;
+        }
+        .t-who {
+            font-size: 11px; font-weight: 700; min-width: 44px;
+            flex-shrink: 0; padding-top: 2px;
+        }
+        .t-who.ai { color: var(--accent); }
+        .t-who.human { color: var(--info); }
+        .t-msg { font-size: 13px; line-height: 1.55; color: var(--text-primary); }
+
+        /* Right column */
+        .eval-right { display: flex; flex-direction: column; gap: 18px; }
+        .rating-panel {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 22px;
+            position: sticky; top: 130px;
+        }
+        .rp-title {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 22px;
+        }
+        .r-group { margin-bottom: 22px; }
+        .r-label {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .r-label span { font-size: 14px; font-weight: 600; }
+        .tip {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--bg-input); border: 1px solid var(--border-light);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 10px; color: var(--text-muted); cursor: help;
+            position: relative;
+        }
+        .tip:hover::after {
+            content: attr(data-tip); position: absolute; bottom: calc(100% + 6px);
+            right: 0; background: var(--bg-primary); border: 1px solid var(--border-light);
+            padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 400;
+            color: var(--text-secondary); width: 210px; line-height: 1.45; z-index: 10;
+            pointer-events: none;
+        }
+        .r-btns { display: flex; gap: 6px; }
+        .r-btn {
+            flex: 1; padding: 10px 0; border-radius: 8px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            color: var(--text-muted); font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .r-btn:hover {
+            border-color: var(--accent-border); color: var(--text-primary);
+        }
+        .r-btn.sel {
+            background: var(--accent); border-color: var(--accent); color: #000;
+        }
+
+        .hr { height: 1px; background: var(--border); margin: 22px 0; }
+
+        .flags-title {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 10px;
+        }
+        .flags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .flag {
+            padding: 5px 12px; border-radius: 20px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            font-size: 11px; font-weight: 500; color: var(--text-secondary);
+            cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .flag:hover { border-color: var(--accent-border); }
+        .flag.sel {
+            background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25);
+            color: var(--danger);
+        }
+
+        .comment-box {
+            margin-top: 16px;
+        }
+        .comment-box label {
+            display: block; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-secondary); margin-bottom: 8px;
+        }
+        .comment-ta {
+            width: 100%; min-height: 72px; padding: 12px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-primary);
+            font-size: 13px; font-family: 'Inter', sans-serif;
+            resize: vertical; outline: none; transition: border-color 0.2s;
+        }
+        .comment-ta:focus { border-color: var(--accent); }
+
+        .submit-row {
+            display: flex; gap: 10px; margin-top: 22px;
+        }
+        .submit-row .btn { flex: 1; }
+
+        .validation-msg {
+            font-size: 12px; color: var(--danger); margin-top: 8px;
+            display: none; align-items: center; gap: 6px;
+        }
+
+        /* ===== SUCCESS ===== */
+        .success-screen {
+            min-height: calc(100vh - 64px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 28px;
+        }
+        .success-box { text-align: center; max-width: 480px; width: 100%; }
+        .success-check {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: var(--accent-bg); border: 2px solid var(--accent-border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; margin: 0 auto 24px;
+            animation: popIn 0.6s ease;
+        }
+        .success-box h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
+        .success-box > p {
+            font-size: 15px; color: var(--text-secondary); margin-bottom: 32px;
+        }
+        .summary-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 22px; text-align: left;
+            margin-bottom: 32px;
+        }
+        .summary-card h3 {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 16px;
+        }
+        .sum-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 0; border-bottom: 1px solid var(--border);
+        }
+        .sum-row:last-child { border-bottom: none; }
+        .sum-label { font-size: 14px; color: var(--text-secondary); }
+        .sum-val { font-size: 14px; font-weight: 800; color: var(--accent); }
+        .success-btns { display: flex; gap: 12px; justify-content: center; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed; bottom: 28px; right: 28px;
+            background: var(--bg-card); border: 1px solid var(--accent-border);
+            border-radius: var(--radius); padding: 14px 20px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 14px; font-weight: 500; z-index: 9999;
+            transform: translateY(80px); opacity: 0;
+            transition: all 0.35s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .eval-body { grid-template-columns: 1fr; }
+            .rating-panel { position: static; }
+        }
+        @media (max-width: 768px) {
+            .login-screen { flex-direction: column; }
+            .login-left { padding: 40px 24px 20px; max-width: none; }
+            .login-hero h1 { font-size: 28px; }
+            .login-right { padding: 20px 24px 40px; }
+            .login-card { padding: 28px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .header-nav { display: none; }
+            .app-header { padding: 0 16px; }
+            .dashboard { padding: 24px 16px; }
+            .eval-body { padding: 16px; }
+            .eval-bar { padding: 10px 16px; }
+            .mini-progress { width: 100px; }
+        }
+        @media (max-width: 480px) {
+            .login-left { padding: 32px 20px 16px; }
+            .login-hero h1 { font-size: 24px; }
+            .login-hero p { font-size: 14px; }
+            .login-right { padding: 16px 20px 32px; }
+            .login-card { padding: 24px; }
+            .login-features { display: none; }
+            .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+            .stat-card { padding: 16px; }
+            .stat-value { font-size: 26px; }
+            .welcome h1 { font-size: 22px; }
+            .queue-item { flex-wrap: wrap; }
+            .qi-meta { width: 100%; justify-content: space-between; }
+            .audio-row { flex-wrap: wrap; }
+            .speed-row { width: 100%; justify-content: center; margin-left: 0; }
+            .submit-row { flex-direction: column; }
+            .success-btns { flex-direction: column; }
+            .ctx-tags { gap: 6px; }
+            .r-btns { gap: 4px; }
+            .r-btn { padding: 8px 0; font-size: 13px; }
+            .eval-bar-right { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== SCREEN 1: LOGIN ==================== -->
+<div id="loginScreen" class="screen active">
+    <div class="login-screen">
+        <div class="login-left">
+            <div class="login-brand">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Josh_Talk_Logo.png" alt="Josh Talks">
+                <div class="login-brand-divider"></div>
+                <div class="login-brand-text">
+                    <h3>Voice AI Platform</h3>
+                    <p>Conversation Evaluator</p>
+                </div>
+            </div>
+            <div class="login-hero">
+                <h1>Teaching AI to<br><span>Speak Better</span> 🎙️</h1>
+                <p>A scalable evaluation platform for reviewing AI-human conversations — ensuring consistency, reliability, and quality across every interaction.</p>
+            </div>
+            <div class="login-features">
+                <span class="feature-tag">🎧 Audio Player</span>
+                <span class="feature-tag">📝 Synced Transcripts</span>
+                <span class="feature-tag">📊 Smart Rubrics</span>
+                <span class="feature-tag">⚡ Fast Evaluation</span>
+                <span class="feature-tag">🔒 Calibrated Scoring</span>
+                <span class="feature-tag">🤖 AI-Assisted</span>
+            </div>
+        </div>
+        <div class="login-right">
+            <div class="login-card">
+                <h2>Welcome back 👋</h2>
+                <p class="subtitle">Sign in to your evaluator account</p>
+
+                <div id="loginError" class="login-error">
+                    <span>⚠️</span>
+                    <span>Invalid email or password. Please try again.</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="evaluator@joshtalks.com" value="evaluator@joshtalks.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" value="password123">
+                        <button class="password-toggle" onclick="togglePassword()">Show</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label><input type="checkbox" class="checkbox" checked> Remember me</label>
+                    <a href="#">Forgot password?</a>
+                </div>
+                <button class="btn btn-primary btn-full" onclick="handleLogin()" id="loginBtn">
+                    Sign In →
+                </button>
+                <p class="login-footer">
+                    New evaluator? <a href="#">Request access</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SCREEN 2: DASHBOARD ==================== -->
+<div id="dashboardScreen" class="screen">
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Josh_Talk_Logo.png" alt="Josh" class="header-logo">
+            <div class="header-sep"></div>
+            <div class="header-brand">
+                <h3>Voice AI Evaluator</h3>
+                <p>Conversation Quality Platform</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <nav class="header-nav">
+                <button class="nav-btn active">Dashboard</button>
+                <button class="nav-btn">History</button>
+                <button class="nav-btn">Calibration</button>
+            </nav>
+            <div class="user-pill" onclick="handleLogout()">
+                <div class="user-avatar">RK</div>
+                <span>Rahul K.</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <div class="welcome">
+            <h1>Welcome back, <span>Rahul</span> 👋</h1>
+            <p>You have conversations waiting for evaluation. Let's maintain quality!</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-value">25</div>
+                <div class="stat-label">Assigned Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value green">18</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-value">7</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value green">94%</div>
+                <div class="stat-label">Calibration Score</div>
+            </div>
+        </div>
+
+        <!-- Queue -->
+        <div class="section-head">
+            <h2>Your Evaluation Queue</h2>
+            <span class="badge badge-yellow">⏳ 7 pending</span>
+        </div>
+        <div class="queue">
+            <div class="queue-item" onclick="openEvaluation(0)">
+                <div class="qi-icon">🏨</div>
+                <div class="qi-info">
+                    <h3>CONV-1042 · Hotel Room Booking</h3>
+                    <p>AI calls Hotel Mariana to check room availability for 2 guests, Jun 14-17</p>
+                </div>
+                <div class="qi-meta">
+                    <span class="badge badge-green">New</span>
+                    <span class="qi-dur">2:34</span>
+                    <span class="qi-arrow">→</span>
+                </div>
+            </div>
+            <div class="queue-item" onclick="openEvaluation(1)">
+                <div class="qi-icon">🍕</div>
+                <div class="qi-info">
+                    <h3>CONV-1043 · Restaurant Reservation</h3>
+                    <p>AI calls Bella Cucina to reserve a table for 4 on Saturday evening</p>
+                </div>
+                <div class="qi-meta">
+                    <span class="badge badge-green">New</span>
+                    <span class="qi-dur">3:12</span>
+                    <span class="qi-arrow">→</span>
+                </div>
+            </div>
+            <div class="queue-item" onclick="openEvaluation(2)">
+                <div class="qi-icon">✈️</div>
+                <div class="qi-info">
+                    <h3>CONV-1044 · Flight Inquiry</h3>
+                    <p>AI calls airline support to check flight status and rebooking options</p>
+                </div>
+                <div class="qi-meta">
+                    <span class="badge badge-green">New</span>
+                    <span class="qi-dur">4:05</span>
+                    <span class="qi-arrow">→</span>
+                </div>
+            </div>
+            <div class="queue-item" onclick="openEvaluation(3)">
+                <div class="qi-icon">🏥</div>
+                <div class="qi-info">
+                    <h3>CONV-1045 · Clinic Appointment</h3>
+                    <p>AI calls dental clinic to schedule a cleaning appointment next week</p>
+                </div>
+                <div class="qi-meta">
+                    <span class="badge badge-yellow">Draft</span>
+                    <span class="qi-dur">1:58</span>
+                    <span class="qi-arrow">→</span>
+                </div>
+            </div>
+            <div class="queue-item" onclick="openEvaluation(4)">
+                <div class="qi-icon">🚗</div>
+                <div class="qi-info">
+                    <h3>CONV-1046 · Car Service Booking</h3>
+                    <p>AI calls auto workshop to schedule oil change and tire rotation</p>
+                </div>
+                <div class="qi-meta">
+                    <span class="badge badge-green">New</span>
+                    <span class="qi-dur">2:47</span>
+                    <span class="qi-arrow">→</span>
+                </div>
+            </div>
+            <div class="queue-item" onclick="openEvaluation(5)">
+                <div class="qi-icon">📦</div>
+                <div class="qi-info">
+                    <h3>CONV-1047 · Delivery Status Check</h3>
+                    <p>AI calls courier service to check package delivery ETA and reroute</p>
+                </div>
+                <div class="qi-meta">
+                    <span class="badge badge-green">New</span>
+                    <span class="qi-dur">1:42</span>
+                    <span class="qi-arrow">→</span>
+                </div>
+            </div>
+            <div class="queue-item" onclick="openEvaluation(6)">
+                <div class="qi-icon">💇</div>
+                <div class="qi-info">
+                    <h3>CONV-1048 · Salon Appointment</h3>
+                    <p>AI calls hair salon to book a haircut and color appointment</p>
+                </div>
+                <div class="qi-meta">
+                    <span class="badge badge-green">New</span>
+                    <span class="qi-dur">2:15</span>
+                    <span class="qi-arrow">→</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ==================== SCREEN 3: EVALUATION ==================== -->
+<div id="evalScreen" class="screen">
+    <header class="app-header">
+        <div class="header-left">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Josh_Talk_Logo.png" alt="Josh" class="header-logo">
+            <div class="header-sep"></div>
+            <div class="header-brand">
+                <h3>Voice AI Evaluator</h3>
+                <p>Conversation Quality Platform</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-pill">
+                <div class="user-avatar">RK</div>
+                <span>Rahul K.</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Eval Sub-header -->
+    <div class="eval-bar">
+        <div class="eval-bar-left">
+            <button class="back-btn" onclick="goToDashboard()">←</button>
+            <span class="progress-text">Evaluation <span id="evalNum">3</span> of <span>25</span></span>
+        </div>
+        <div class="eval-bar-right" style="display:flex;align-items:center;gap:14px;">
+            <div class="mini-progress">
+                <div class="mini-progress-fill" id="evalProgressBar" style="width:12%"></div>
+            </div>
+            <span class="badge badge-blue">🎯 Calibration: Gold Standard</span>
+        </div>
+    </div>
+
+    <!-- Eval Content -->
+    <div class="eval-body">
+        <!-- LEFT -->
+        <div class="eval-left">
+            <!-- Context -->
+            <div class="ctx-card">
+                <div class="ctx-label">📋 Task Context</div>
+                <p>AI assistant calls <strong>Hotel Mariana</strong> to check room availability for <strong>2 guests</strong>, checking in <strong>June 14</strong>, checking out <strong>June 17</strong>. The AI should confirm the room type, price per night, and total cost.</p>
+                <div class="ctx-tags">
+                    <span class="ctx-tag">Model: Josh-Voice-v2.4</span>
+                    <span class="ctx-tag">Duration: 2m 34s</span>
+                    <span class="ctx-tag">Category: Hotel Booking</span>
+                    <span class="ctx-tag">Language: English</span>
+                </div>
+            </div>
+
+            <!-- Audio Player -->
+            <div class="card">
+                <div class="card-head">
+                    <span>🎧 Audio Player</span>
+                    <span id="audioStatus" style="color:var(--accent);font-weight:600;font-size:10px;">● READY</span>
+                </div>
+                <div class="card-body">
+                    <div class="waveform" id="waveform" onclick="seekAudio(event)"></div>
+                    <div class="audio-row">
+                        <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+                        <span class="time-display"><span id="currentTime">0:00</span> / <span id="totalTime">2:34</span></span>
+                        <input type="range" class="audio-seek" id="seekBar" min="0" max="154" value="0" oninput="onSeek(this.value)">
+                        <div class="speed-row">
+                            <button class="spd" onclick="setSpeed(this,0.5)">0.5×</button>
+                            <button class="spd active" onclick="setSpeed(this,1)">1×</button>
+                            <button class="spd" onclick="setSpeed(this,1.5)">1.5×</button>
+                            <button class="spd" onclick="setSpeed(this,2)">2×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transcript -->
+            <div class="card">
+                <div class="card-head">
+                    <span>📝 Transcript</span>
+                    <span style="font-size:10px;font-weight:500;color:var(--text-muted);">Click a line to jump to that moment</span>
+                </div>
+                <div class="transcript-scroll" id="transcriptBody">
+                    <div class="t-line active" data-time="0" onclick="jumpTo(0)">
+                        <span class="t-ts">0:00</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">Hi, good morning! I'm calling to check room availability for June fourteenth.</span>
+                    </div>
+                    <div class="t-line" data-time="6" onclick="jumpTo(6)">
+                        <span class="t-ts">0:06</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">Good morning! Sure, let me look that up. How many guests will be staying?</span>
+                    </div>
+                    <div class="t-line" data-time="12" onclick="jumpTo(12)">
+                        <span class="t-ts">0:12</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">Two guests, and we'd like to check out on the seventeenth of June, please.</span>
+                    </div>
+                    <div class="t-line" data-time="19" onclick="jumpTo(19)">
+                        <span class="t-ts">0:19</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">Okay, let me check... We have a double room available at $180 per night.</span>
+                    </div>
+                    <div class="t-line" data-time="28" onclick="jumpTo(28)">
+                        <span class="t-ts">0:28</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">Great, that sounds perfect. Could you confirm the total for three nights?</span>
+                    </div>
+                    <div class="t-line" data-time="34" onclick="jumpTo(34)">
+                        <span class="t-ts">0:34</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">That would be $540 total for three nights, before taxes.</span>
+                    </div>
+                    <div class="t-line" data-time="40" onclick="jumpTo(40)">
+                        <span class="t-ts">0:40</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">And what about taxes? What would the final amount be?</span>
+                    </div>
+                    <div class="t-line" data-time="46" onclick="jumpTo(46)">
+                        <span class="t-ts">0:46</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">With taxes it comes to about $594. Would you like to go ahead and book?</span>
+                    </div>
+                    <div class="t-line" data-time="54" onclick="jumpTo(54)">
+                        <span class="t-ts">0:54</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">Hmm, that's a bit more than we expected. Do you have any other room options available?</span>
+                    </div>
+                    <div class="t-line" data-time="62" onclick="jumpTo(62)">
+                        <span class="t-ts">1:02</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">We also have a standard room for $140 per night. Same dates available.</span>
+                    </div>
+                    <div class="t-line" data-time="70" onclick="jumpTo(70)">
+                        <span class="t-ts">1:10</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">That works better. So that would be $420 before taxes for three nights?</span>
+                    </div>
+                    <div class="t-line" data-time="78" onclick="jumpTo(78)">
+                        <span class="t-ts">1:18</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">Correct! $462 with taxes. Would you like to reserve that one?</span>
+                    </div>
+                    <div class="t-line" data-time="85" onclick="jumpTo(85)">
+                        <span class="t-ts">1:25</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">Yes, please go ahead and reserve the standard room. Thank you for your help!</span>
+                    </div>
+                    <div class="t-line" data-time="94" onclick="jumpTo(94)">
+                        <span class="t-ts">1:34</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">You're welcome! I've booked that for you. The confirmation number is HM-7734. Anything else?</span>
+                    </div>
+                    <div class="t-line" data-time="105" onclick="jumpTo(105)">
+                        <span class="t-ts">1:45</span>
+                        <span class="t-who ai">AI</span>
+                        <span class="t-msg">No, that's everything. Thanks so much for your help. Have a great day!</span>
+                    </div>
+                    <div class="t-line" data-time="113" onclick="jumpTo(113)">
+                        <span class="t-ts">1:53</span>
+                        <span class="t-who human">Human</span>
+                        <span class="t-msg">You too! Goodbye.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT - Rating Panel -->
+        <div class="eval-right">
+            <div class="rating-panel">
+                <div class="rp-title">⭐ Rate This Conversation</div>
+
+                <!-- Naturalness -->
+                <div class="r-group" data-criterion="naturalness">
+                    <div class="r-label">
+                        <span>🗣️ Naturalness</span>
+                        <span class="tip" data-tip="Did the AI sound natural and human-like? Consider pacing, tone, pronunciation, and conversational flow.">?</span>
+                    </div>
+                    <div class="r-btns">
+                        <button class="r-btn" onclick="rate(this,1)">1</button>
+                        <button class="r-btn" onclick="rate(this,2)">2</button>
+                        <button class="r-btn" onclick="rate(this,3)">3</button>
+                        <button class="r-btn" onclick="rate(this,4)">4</button>
+                        <button class="r-btn" onclick="rate(this,5)">5</button>
+                    </div>
+                </div>
+
+                <!-- Comprehension -->
+                <div class="r-group" data-criterion="comprehension">
+                    <div class="r-label">
+                        <span>🧠 Comprehension</span>
+                        <span class="tip" data-tip="Did the AI correctly understand what the human said? Did it handle unexpected responses, accents, or clarifications well?">?</span>
+                    </div>
+                    <div class="r-btns">
+                        <button class="r-btn" onclick="rate(this,1)">1</button>
+                        <button class="r-btn" onclick="rate(this,2)">2</button>
+                        <button class="r-btn" onclick="rate(this,3)">3</button>
+                        <button class="r-btn" onclick="rate(this,4)">4</button>
+                        <button class="r-btn" onclick="rate(this,5)">5</button>
+                    </div>
+                </div>
+
+                <!-- Task Completion -->
+                <div class="r-group" data-criterion="task">
+                    <div class="r-label">
+                        <span>✅ Task Completion</span>
+                        <span class="tip" data-tip="Did the AI accomplish the intended goal of the call? Was the task fully completed, partially completed, or failed?">?</span>
+                    </div>
+                    <div class="r-btns">
+                        <button class="r-btn" onclick="rate(this,1)">1</button>
+                        <button class="r-btn" onclick="rate(this,2)">2</button>
+                        <button class="r-btn" onclick="rate(this,3)">3</button>
+                        <button class="r-btn" onclick="rate(this,4)">4</button>
+                        <button class="r-btn" onclick="rate(this,5)">5</button>
+                    </div>
+                </div>
+
+                <!-- Conversational Handling -->
+                <div class="r-group" data-criterion="handling">
+                    <div class="r-label">
+                        <span>🔄 Conv. Handling</span>
+                        <span class="tip" data-tip="How well did the AI handle unexpected situations? Consider recovery from misunderstandings, topic changes, and graceful conversation management.">?</span>
+                    </div>
+                    <div class="r-btns">
+                        <button class="r-btn" onclick="rate(this,1)">1</button>
+                        <button class="r-btn" onclick="rate(this,2)">2</button>
+                        <button class="r-btn" onclick="rate(this,3)">3</button>
+                        <button class="r-btn" onclick="rate(this,4)">4</button>
+                        <button class="r-btn" onclick="rate(this,5)">5</button>
+                    </div>
+                </div>
+
+                <div class="hr"></div>
+
+                <!-- Overall -->
+                <div class="r-group" data-criterion="overall">
+                    <div class="r-label">
+                        <span>🌟 Overall Quality</span>
+                        <span class="tip" data-tip="Your overall impression of this conversation's quality considering all factors above.">?</span>
+                    </div>
+                    <div class="r-btns">
+                        <button class="r-btn" onclick="rate(this,1)">1</button>
+                        <button class="r-btn" onclick="rate(this,2)">2</button>
+                        <button class="r-btn" onclick="rate(this,3)">3</button>
+                        <button class="r-btn" onclick="rate(this,4)">4</button>
+                        <button class="r-btn" onclick="rate(this,5)">5</button>
+                    </div>
+                </div>
+
+                <div class="hr"></div>
+
+                <!-- Flags -->
+                <div class="flags-title">🚩 Issue Flags</div>
+                <div class="flags">
+                    <span class="flag" onclick="toggleFlag(this)">🔊 Audio Glitch</span>
+                    <span class="flag" onclick="toggleFlag(this)">😵 Hallucination</span>
+                    <span class="flag" onclick="toggleFlag(this)">⏸️ Awkward Pause</span>
+                    <span class="flag" onclick="toggleFlag(this)">❌ Misunderstanding</span>
+                    <span class="flag" onclick="toggleFlag(this)">⚠️ Incomplete Task</span>
+                    <span class="flag" onclick="toggleFlag(this)">🔁 Repetition</span>
+                    <span class="flag" onclick="toggleFlag(this)">🤷 Other</span>
+                </div>
+
+                <!-- Comments -->
+                <div class="comment-box">
+                    <label>💬 Notes</label>
+                    <textarea class="comment-ta" id="evalComment" placeholder="Add any observations or specific feedback..."></textarea>
+                </div>
+
+                <!-- Validation -->
+                <div class="validation-msg" id="validationMsg">
+                    <span>⚠️</span>
+                    <span>Please rate all criteria before submitting.</span>
+                </div>
+
+                <!-- Submit -->
+                <div class="submit-row">
+                    <button class="btn btn-secondary" onclick="saveDraft()">💾 Save Draft</button>
+                    <button class="btn btn-primary" onclick="submitEval()">Submit & Next →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SCREEN 4: SUCCESS ==================== -->
+<div id="successScreen" class="screen">
+    <header class="app-header">
+        <div class="header-left">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Josh_Talk_Logo.png" alt="Josh" class="header-logo">
+            <div class="header-sep"></div>
+            <div class="header-brand">
+                <h3>Voice AI Evaluator</h3>
+                <p>Conversation Quality Platform</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-pill">
+                <div class="user-avatar">RK</div>
+                <span>Rahul K.</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="success-screen">
+        <div class="success-box">
+            <div class="success-check">✓</div>
+            <h1>Evaluation Submitted! 🎉</h1>
+            <p>Great work! Your evaluation for CONV-1042 has been recorded successfully.</p>
+
+            <div class="summary-card">
+                <h3>📊 Your Ratings Summary</h3>
+                <div class="sum-row">
+                    <span class="sum-label">🗣️ Naturalness</span>
+                    <span class="sum-val" id="sumNat">—</span>
+                </div>
+                <div class="sum-row">
+                    <span class="sum-label">🧠 Comprehension</span>
+                    <span class="sum-val" id="sumComp">—</span>
+                </div>
+                <div class="sum-row">
+                    <span class="sum-label">✅ Task Completion</span>
+                    <span class="sum-val" id="sumTask">—</span>
+                </div>
+                <div class="sum-row">
+                    <span class="sum-label">🔄 Conv. Handling</span>
+                    <span class="sum-val" id="sumHand">—</span>
+                </div>
+                <div class="sum-row" style="border-top:2px solid var(--accent-border);padding-top:12px;margin-top:4px;">
+                    <span class="sum-label" style="font-weight:700;color:var(--text-primary);">🌟 Overall Quality</span>
+                    <span class="sum-val" id="sumOver" style="font-size:18px;">—</span>
+                </div>
+            </div>
+
+            <div class="success-btns">
+                <button class="btn btn-primary" onclick="nextConversation()" style="padding:14px 32px;">
+                    Next Conversation →
+                </button>
+                <button class="btn btn-secondary" onclick="goToDashboard()" style="padding:14px 32px;">
+                    ← Back to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <span class="toast-icon">✅</span>
+    <span id="toastMsg">Action completed successfully</span>
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+    // ===== SCREEN NAVIGATION =====
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ===== LOGIN =====
+    function togglePassword() {
+        const inp = document.getElementById('loginPassword');
+        const btn = inp.nextElementSibling;
+        if (inp.type === 'password') {
+            inp.type = 'text'; btn.textContent = 'Hide';
+        } else {
+            inp.type = 'password'; btn.textContent = 'Show';
+        }
+    }
+
+    function handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPassword').value;
+        const btn = document.getElementById('loginBtn');
+        const err = document.getElementById('loginError');
+
+        if (!email || !pass) {
+            err.style.display = 'flex';
+            return;
+        }
+
+        err.style.display = 'none';
+        btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.6s linear infinite;"></span> Signing in...';
+        btn.style.pointerEvents = 'none';
+
+        setTimeout(() => {
+            btn.innerHTML = 'Sign In →';
+            btn.style.pointerEvents = 'auto';
+            showScreen('dashboardScreen');
+            showToast('👋 Welcome back, Rahul!');
+        }, 1200);
+    }
+
+    function handleLogout() {
+        showScreen('loginScreen');
+        showToast('👋 Logged out successfully');
+    }
+
+    // ===== DASHBOARD =====
+    let currentEvalIndex = 0;
+
+    function openEvaluation(index) {
+        currentEvalIndex = index;
+        const num = index + 1;
+        document.getElementById('evalNum').textContent = num;
+        document.getElementById('evalProgressBar').style.width = ((num / 25) * 100) + '%';
+
+        // Reset ratings
+        document.querySelectorAll('.r-btn').forEach(b => b.classList.remove('sel'));
+        document.querySelectorAll('.flag').forEach(f => f.classList.remove('sel'));
+        document.getElementById('evalComment').value = '';
+        document.getElementById('validationMsg').style.display = 'none';
+        ratings = {};
+
+        // Reset audio
+        resetAudio();
+
+        showScreen('evalScreen');
+    }
+
+    function goToDashboard() {
+        stopAudio();
+        showScreen('dashboardScreen');
+    }
+
+    // ===== AUDIO PLAYER (SIMULATED) =====
+    let isPlaying = false;
+    let currentSec = 0;
+    const totalSec = 154; // 2:34
+    let playInterval = null;
+    let playbackSpeed = 1;
+    let waveBars = [];
+
+    // Generate waveform
+    function initWaveform() {
+        const wf = document.getElementById('waveform');
+        wf.innerHTML = '';
+        const barCount = window.innerWidth < 480 ? 40 : 80;
+        waveBars = [];
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar';
+            const h = Math.random() * 35 + 10;
+            bar.style.height = h + 'px';
+            wf.appendChild(bar);
+            waveBars.push(bar);
+        }
+        updateWaveform();
+    }
+
+    function updateWaveform() {
+        const progress = currentSec / totalSec;
+        const playedCount = Math.floor(progress * waveBars.length);
+        waveBars.forEach((bar, i) => {
+            bar.classList.toggle('played', i <= playedCount);
+        });
+    }
+
+    function formatTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return m + ':' + String(s).padStart(2, '0');
+    }
+
+    function updateTimeDisplay() {
+        document.getElementById('currentTime').textContent = formatTime(currentSec);
+        document.getElementById('seekBar').value = currentSec;
+        updateWaveform();
+        updateActiveTranscript();
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            stopAudio();
+        } else {
+            startAudio();
+        }
+    }
+
+    function startAudio() {
+        isPlaying = true;
+        document.getElementById('playBtn').textContent = '⏸';
+        document.getElementById('audioStatus').textContent = '● PLAYING';
+        document.getElementById('audioStatus').style.color = 'var(--accent)';
+
+        playInterval = setInterval(() => {
+            currentSec += playbackSpeed;
+            if (currentSec >= totalSec) {
+                currentSec = totalSec;
+                stopAudio();
+            }
+            updateTimeDisplay();
+        }, 1000);
+    }
+
+    function stopAudio() {
+        isPlaying = false;
+        document.getElementById('playBtn').textContent = '▶';
+        document.getElementById('audioStatus').textContent = currentSec > 0 ? '● PAUSED' : '● READY';
+        if (currentSec >= totalSec) {
+            document.getElementById('audioStatus').textContent = '● FINISHED';
+        }
+        clearInterval(playInterval);
+    }
+
+    function resetAudio() {
+        stopAudio();
+        currentSec = 0;
+        updateTimeDisplay();
+        initWaveform();
+    }
+
+    function onSeek(val) {
+        currentSec = parseInt(val);
+        updateTimeDisplay();
+    }
+
+    function seekAudio(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        currentSec = Math.floor(pct * totalSec);
+        updateTimeDisplay();
+    }
+
+    function setSpeed(btn, speed) {
+        playbackSpeed = speed;
+        document.querySelectorAll('.spd').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function jumpTo(sec) {
+        currentSec = sec;
+        updateTimeDisplay();
+        if (!isPlaying) startAudio();
+    }
+
+    // Transcript highlighting
+    function updateActiveTranscript() {
+        const lines = document.querySelectorAll('.t-line');
+        let activeIdx = 0;
+        lines.forEach((line, i) => {
+            const t = parseInt(line.dataset.time);
+            if (currentSec >= t) activeIdx = i;
+        });
+        lines.forEach((l, i) => l.classList.toggle('active', i === activeIdx));
+
+        // Auto scroll
+        const activeLine = lines[activeIdx];
+        if (activeLine) {
+            const container = document.getElementById('transcriptBody');
+            const lineTop = activeLine.offsetTop - container.offsetTop;
+            const containerScroll = container.scrollTop;
+            const containerHeight = container.clientHeight;
+            if (lineTop < containerScroll || lineTop > containerScroll + containerHeight - 60) {
+                container.scrollTo({ top: lineTop - 60, behavior: 'smooth' });
+            }
+        }
+    }
+
+    // ===== RATINGS =====
+    let ratings = {};
+
+    function rate(btn, val) {
+        const group = btn.closest('.r-group');
+        const criterion = group.dataset.criterion;
+        ratings[criterion] = val;
+
+        group.querySelectorAll('.r-btn').forEach(b => b.classList.remove('sel'));
+        btn.classList.add('sel');
+
+        document.getElementById('validationMsg').style.display = 'none';
+    }
+
+    // ===== FLAGS =====
+    function toggleFlag(el) {
+        el.classList.toggle('sel');
+    }
+
+    // ===== SUBMIT =====
+    function submitEval() {
+        const required = ['naturalness', 'comprehension', 'task', 'handling', 'overall'];
+        const missing = required.filter(r => !ratings[r]);
+
+        if (missing.length > 0) {
+            document.getElementById('validationMsg').style.display = 'flex';
+            // Highlight missing
+            missing.forEach(m => {
+                const grp = document.querySelector(`[data-criterion="${m}"]`);
+                grp.style.animation = 'none';
+                grp.offsetHeight; // trigger reflow
+                grp.style.animation = 'fadeIn 0.3s ease';
+            });
+            return;
+        }
+
+        // Stop audio
+        stopAudio();
+
+        // Show success
+        document.getElementById('sumNat').textContent = ratings.naturalness + ' / 5';
+        document.getElementById('sumComp').textContent = ratings.comprehension + ' / 5';
+        document.getElementById('sumTask').textContent = ratings.task + ' / 5';
+        document.getElementById('sumHand').textContent = ratings.handling + ' / 5';
+        document.getElementById('sumOver').textContent = ratings.overall + ' / 5';
+
+        showScreen('successScreen');
+        showToast('✅ Evaluation submitted successfully!');
+    }
+
+    function saveDraft() {
+        showToast('💾 Draft saved successfully');
+    }
+
+    function nextConversation() {
+        if (currentEvalIndex < 6) {
+            openEvaluation(currentEvalIndex + 1);
+        } else {
+            goToDashboard();
+            showToast('🎉 All conversations evaluated!');
+        }
+    }
+
+    // ===== TOAST =====
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', () => {
+        initWaveform();
+    });
+
+    // Handle Enter key on login
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && document.getElementById('loginScreen').classList.contains('active')) {
+            handleLogin();
+        }
+    });
+
+    // Reinit waveform on resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(initWaveform, 200);
+    });
+</script>
+
+</body>
+</html>
